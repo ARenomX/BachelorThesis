@@ -99,3 +99,22 @@ def time(reference,uncalibrated):
     calibrated[:,1] = uncalibrated[:,1]
     return reference, calibrated, shift, increment
 
+
+def force_position(f,p):
+    i,j=0,15
+    while f[i,1] != max(np.append(f[i-30:i+30,1],[5])): i+=1
+    while p[j,1] != min(np.append(p[j-15:j+15,1],[-0.0015])): j+=1
+    t,T = f[i,0],p[j,0]
+    T_final = p[-1,0]
+    newforce = np.copy(read.cut(f,t,t+(T_final-T)))
+    newforce[:,0] = newforce[:,0] - newforce[0,0]
+    newpos = np.copy(read.cut(p,T,T_final))
+    newpos[:,0] = newpos[:,0] - newpos[0,0]
+    print(t,T)
+    return newforce,newpos
+
+def phyling_test(cable_name,phy_name):
+    cab = read.cabled(cable_name)
+    phy = read.wireless(phy_name)
+    cab,phy_cal,shift,incr = time(cab,phy)
+    return incr

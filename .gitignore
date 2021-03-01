@@ -129,10 +129,16 @@ dmypy.json
 .pyre/
 
 #Images
-.jpg
+*.jpg
+*.cih
+*.driveupload
+*.avi
+*.png
+*.mp4
+*.jpg
 
 #CSV Files
-.csv
+*.csv
 
 #Excel files
-.xlsx
+*.xlsx

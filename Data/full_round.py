@@ -7,7 +7,7 @@ full_round.py
 import data_read as read
 import graphing as plot
 import numpy as np
-import double_2_single as ds
+import time
 
 def full_read(name,thresh = 10):
     file = read.phy_round(name)
@@ -39,12 +39,8 @@ def manual_read(name,thresh = 5):
                 else:
                     a = max(a1,a)
                     impact_list+=[(a,tau+tau1,b,c,True)]
-#                plot.peak(file,c)
-#                print(a,True)
             else:    
                 impact_list+=[(a,tau,b,c,False)]
-#                plot.peak(file,c)
-#                print(a,False)
             
         i=c+500
     return impact_list[:-1]
@@ -83,8 +79,8 @@ def concus_risk (alist,taulist):
             number+=1
     return (check,number)
             
-def round_a_tau(name,athresh=10,num_rounds=4):
-    a = read.phy_round(name)
+def round_a_tau(name,athresh=10,num_rounds=4,pm=1):
+    a = read.phy_round(name,pm)
     round_list = read.split_rounds(a,num_rounds)
     round_data = []
     alist_tot = []
@@ -125,5 +121,16 @@ def round_a_tau(name,athresh=10,num_rounds=4):
 def main():
     name = input('Enter Filename: ')
     rn = int(input('Enter number of rounds: '))
+    a = read.phy_round(name)
+    print()
+    print('Full Dataset:')
+    plot.plot_time(a,['Time (s)', 'Acceleration (g)'])
+    i = np.argmax(a[:,1])
+    time.sleep(1)
+    print('Example peak: ')
+    plot.peak(a,i)
+    time.sleep(1)
+    pos = input('Is the plot the right way up? (y/n)')
+    pm = -1 if pos == 'n' else 1
     print('Calculating...')
-    rd = round_a_tau(name, 7.5, rn)
+    rd = round_a_tau(name, 7.5, rn, pm)

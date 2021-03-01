@@ -24,6 +24,14 @@ def cabled (name):
     res[:,0] = res[:,0]
     return res
 
+def read_2(path):
+    file = pd.read_csv(r'{}.csv'.format(name),delimiter = ';',skiprows=6)
+    res = file.values[:,1:4]
+    acc1,acc2 = res[:,[0,1]],res[:,[0,2]]
+    acc1[:,1] = acc1[:,1]*(1/0.00845)
+    acc2[:,1] = acc2[:,1]*(1/0.0101)
+    return acc1,acc2
+
 def wireless (name):
     file = pd.read_csv(r'{}.csv'.format(name),delimiter = ',',skiprows=1)
     res_int = file.values[:,:2]
@@ -52,7 +60,7 @@ def cut(file,start,end):
         i+=1
     while j<len(file) and file[j,0] <= end:
         j+=1
-    return file[i:j,:]
+    return np.copy(file[i:j,:])
 
 def fullread(cabledname,wirelessname):
     a = cabled(cabledname)
@@ -97,17 +105,29 @@ def tau(data):
         j-=1
     return np.round(data[i,0]-data[j,0],5)
 
-def phy_round(name):
+def moving_average (data, n):
+    new = np.copy(data)
+    for i in range(0,n):
+        new[i,1] = np.mean(data[0:i+n,1])
+    for i in range(n,len(data-n)):
+        new[i,1] = np.mean(data[i-n:i+n,1])
+    return new
+
+
+def phy_round(name,pm=1):
     file = pd.read_csv(r'Phyling_rounds/{}.csv'.format(name),delimiter = ',',skiprows=1)
     res_int = file.values[:,:2]
     res = res_int.astype(float)
-    res[:,1] = (res[:,1] - res[0,1])* 0.03
+    res[:,1] = pm*(res[:,1] - res[0,1])* 0.03
     res[:,0] = (res[:,0] - res[0,0]) * 0.000001
-    return res
+    return moving_average(res,5)
 
 def nextpeak(file, start, thresh=5):
     i = start
-    while i<len(file)-1 and file[i,1] != max(np.append(file[i-100:i+100,1],[thresh])):i+=1
+    if thresh == -1:
+        i = np.argmax(file[:,1])
+    else:
+        while i<len(file)-1 and file[i,1] != max(np.append(file[i-50:i+50,1],[thresh])):i+=1
     if i >= len(file)-2:
         return 0,0,0,np.infty
     else:
@@ -120,13 +140,11 @@ def split_rounds(file,numb_rounds):
     thresh = q[-numb_rounds]-1
     dif_thresh = [i for i in difs if i[0] > thresh]
     if dif_thresh[-1][1]+5000 < len(file):
-        num_rounds = len(dif_thresh)
         check=True
         thresh = q[-(numb_rounds-1)]-1
         dif_thresh = [i for i in difs if i[0] > thresh]
     else:
         check = False
-        num_rounds = len(dif_thresh) - 1
     rounds = []
     start = 0
     for i in dif_thresh:
@@ -135,4 +153,32 @@ def split_rounds(file,numb_rounds):
     if check:
         rounds += [file[start:]]
     return rounds
+
+def force(name):
+    file = pd.read_csv(r'{}.csv'.format(name),delimiter = ';',skiprows=6)
+    ret = file.values[:,[1,2]]
+    ret[:,1] = (0.94414 - 4.06581*ret[:,1])*9.81
+    return ret
+
+def position(name):
+    file = pd.read_excel(r'{}.xlsx'.format(name))
+    ret = file.values[:,[0,1]]
+    return ret
     
+def double_peak(file):
+    i=0
+    while i<len(file)-1 and file[i,1] != max(np.append(file[i-20:i+20,1],[5])):i+=1
+    j=i+5
+    while j<len(file)-1 and file[j,1] != max(np.append(file[j-20:j+20,1],[5])):j+=1
+    #print(i,j,file[i,0],file[j,0])
+    time_dif = file[j,0]-file[i,0]
+    ratio = file[i,1]/file[j,1]
+    return np.round(time_dif,4),np.round(ratio,4)
+
+def moving_average (data, n):
+    new = np.copy(data)
+    for i in range(0,n):
+        new[i,1] = np.mean(data[0:i+n,1])
+    for i in range(n,len(data-n)):
+        new[i,1] = np.mean(data[i-n:i+n,1])
+    return new
